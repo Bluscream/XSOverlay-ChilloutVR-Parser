@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Net;
+using System.Text;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 using System.Threading;
@@ -20,10 +22,48 @@ namespace XSOverlay_VRChat_Parser
         static HashSet<string> IgnorableAudioPaths = new HashSet<string>();
         static HashSet<string> IgnorableIconPaths = new HashSet<string>();
 
-        static string UserFolderPath { get; set; }
-        static string LogFileName { get; set; }
-        static string LastKnownLocationName { get; set; } // World name
-        static string LastKnownLocationID { get; set; } // World ID
+        public static string UserFolderPath { get; set; }
+        public static string LogFileName { get; set; }
+        public static class Variables
+        {
+            public static bool MLDetected = false;
+            public static class VR
+            {
+                public static bool Enabled = false;
+                public static string Identifier = string.Empty;
+            }
+                public static class User
+            {
+                public static string Name = string.Empty;
+            }
+            public static class Versions
+            {
+                public static Version Unity = new Version();
+                public static Version CoHtml = new Version();
+                public static Version OS = new Version();
+                public static Version Dissonance = new Version();
+            }
+            public static class World
+            {
+                public static string Name = string.Empty;
+                public static Guid UUID = new Guid();
+            }
+            public static IPEndPoint Server = IPEndPoint.Parse("127.0.0.1:1");
+        }
+
+        public static class Regexes
+        {
+            public static readonly Regex Username = new Regex(@"Successfully authenticated as: (.+)\.$", RegexOptions.Compiled);
+            public static string GetUsername(string input) => Username.Match(input).Groups[1].Value;
+            public static readonly Regex Server = new Regex(@"^Connected to (.*) on port (\d+) using (\w+)\.$", RegexOptions.Compiled);
+            public static IPEndPoint GetServerEndpoint(string input)
+            {
+                var parsed = Regexes.Server.Match(input).Groups;
+                return IPEndPoint.Parse(parsed[0].Value + ":" + parsed[1].Value);
+            }
+            public static readonly Regex UUID = new Regex(@"[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}", RegexOptions.Compiled);
+            public static Guid GetUUID(string input) => Guid.Parse(UUID.Match(input).Groups[1].Value);
+        }
 
         static readonly object logMutex = new object();
 
@@ -38,7 +78,7 @@ namespace XSOverlay_VRChat_Parser
 
         static async Task Main(string[] args)
         {
-            UserFolderPath = Environment.ExpandEnvironmentVariables(@"%AppData%\..\LocalLow\XSOverlay VRChat Parser");
+            UserFolderPath = Environment.ExpandEnvironmentVariables(@"%AppData%\..\LocalLow\XSOverlay ChilloutVR Parser");
             if (!Directory.Exists(UserFolderPath))
                 Directory.CreateDirectory(UserFolderPath);
 
@@ -85,7 +125,7 @@ namespace XSOverlay_VRChat_Parser
 
             Log(LogEventType.Info, $"Log detection timer initialized with poll frequency {Configuration.DirectoryPollFrequencyMilliseconds} and parse frequency {Configuration.ParseFrequencyMilliseconds}.");
 
-            XSGlobals.DefaultSourceApp = "XSOverlay VRChat Parser";
+            XSGlobals.DefaultSourceApp = "XSOverlay ChilloutVR Parser";
             XSGlobals.DefaultOpacity = Configuration.Opacity;
             XSGlobals.DefaultVolume = Configuration.NotificationVolume;
 
@@ -108,7 +148,7 @@ namespace XSOverlay_VRChat_Parser
                 {
                     AudioPath = XSGlobals.GetBuiltInAudioSourceString(XSAudioDefault.Default),
                     Title = "Application Started",
-                    Content = $"VRChat Log Parser has initialized.",
+                    Content = $"ChilloutVR Log Parser has initialized.",
                     Height = 110.0f
                 });
             }
@@ -182,7 +222,7 @@ namespace XSOverlay_VRChat_Parser
         {
             string[] allFiles = Directory.GetFiles(Environment.ExpandEnvironmentVariables(Configuration.OutputLogRoot));
             foreach (string fn in allFiles)
-                if (!Subscriptions.ContainsKey(fn) && fn.Contains("output_log"))
+                if (!Subscriptions.ContainsKey(fn) && fn == "Player.log")
                 {
                     Subscriptions.Add(fn, new TailSubscription(fn, ParseTick, 0, Configuration.ParseFrequencyMilliseconds));
                     Log(LogEventType.Info, $"A tail subscription was added to {fn}");
@@ -215,48 +255,24 @@ namespace XSOverlay_VRChat_Parser
                         int tocLoc = 0;
                         string[] tokens = line.Split(' ');
 
-                        // Get new LastKnownLocationName here
-                        if (line.Contains("Joining or"))
+                        if (line.StartsWith("~   This Game has been MODIFIED using "))
                         {
-                            for (int i = 0; i < tokens.Length; i++)
-                            {
-                                if (tokens[i] == "Room:")
-                                {
-                                    tocLoc = i;
-                                    break;
-                                }
-                            }
-
-                            if (tokens.Length > tocLoc + 1)
-                            {
-                                string name = "";
-
-                                for (int i = tocLoc + 1; i < tokens.Length; i++)
-                                    name += tokens[i] + " ";
-
-                                name = name.Trim();
-
-                                LastKnownLocationName = name.Trim();
-                            }
+                            Variables.MLDetected = true;
+                        }
+                        else if (line.Contains("[Core:ApiAuthenticationHelper] Successfully authenticated as: "))
+                        {
+                            Variables.User.Name = Regexes.GetUsername(line);
+                            // if (Variables.MLDetected) System.Diagnostics.Process.Start($"mailto:team@abinteractive.net?subject=I'm%20using%20MelonLoader&body=Hello%2C%20my%20ingame%20username%20is%20{Variables.User.Name}%20and%20i%20have%20started%20ChilloutVR%20while%20MelonLoader%20is%20installed%20at%20{DateTime.Now}");
                         }
                         // Get new LastKnownLocationID here
-                        else if (line.Contains("Joining w"))
+                        else if (line.Contains("ApiGatherInstanceJoinInfo"))
                         {
-                            for (int i = 0; i < tokens.Length; i++)
-                            {
-                                if (tokens[i] == "Joining")
-                                {
-                                    tocLoc = i;
-                                    break;
-                                }
-                            }
-
-                            if (tokens.Length > tocLoc + 1)
-                                LastKnownLocationID = tokens[tocLoc + 1];
+                            Variables.World.UUID = Regexes.GetUUID(line);
                         }
                         // At this point, we have the location name/id and are transitioning.
-                        else if (line.Contains("Successfully joined room"))
+                        else if (line.StartsWith("Connected to "))
                         {
+                            Variables.Server = Regexes.GetServerEndpoint(line);
                             SilencedUntil = DateTime.Now.AddSeconds(Configuration.WorldJoinSilenceSeconds);
 
                             ToSend.Add(new Tuple<EventType, XSNotification>(EventType.WorldChange, new XSNotification()
@@ -264,120 +280,25 @@ namespace XSOverlay_VRChat_Parser
                                 Timeout = Configuration.WorldChangedNotificationTimeoutSeconds,
                                 Icon = IgnorableIconPaths.Contains(Configuration.WorldChangedIconPath) ? Configuration.WorldChangedIconPath : Configuration.GetLocalResourcePath(Configuration.WorldChangedIconPath),
                                 AudioPath = IgnorableAudioPaths.Contains(Configuration.WorldChangedAudioPath) ? Configuration.WorldChangedAudioPath : Configuration.GetLocalResourcePath(Configuration.WorldChangedAudioPath),
-                                Title = LastKnownLocationName,
+                                Title = new StringBuilder($"UUID: {Variables.World.UUID}").AppendLine($"Server: {Variables.Server}").ToString(),
                                 Content = $"{(Configuration.DisplayJoinLeaveSilencedOverride ? "" : $"Silencing notifications for {Configuration.WorldJoinSilenceSeconds} seconds.")}",
                                 Height = 110
                             }));
 
-                            Log(LogEventType.Event, $"[VRC] World changed to {LastKnownLocationName} -> {LastKnownLocationID}");
-                        }
-                        // Get player joins here
-                        else if (line.Contains("[Behaviour] OnPlayerJoined"))
-                        {
-                            for (int i = 0; i < tokens.Length; i++)
-                            {
-                                if (tokens[i] == "OnPlayerJoined")
-                                {
-                                    tocLoc = i;
-                                    break;
-                                }
-                            }
-
-                            string message = "";
-                            string displayName = "";
-
-                            if (tokens.Length > tocLoc + 1)
-                            {
-                                string name = "";
-
-                                for (int i = tocLoc + 1; i < tokens.Length; i++)
-                                    name += tokens[i] + " ";
-
-                                displayName = name.Trim();
-
-                                message += displayName;
-                            }
-                            else
-                            {
-                                message += "No username was provided.";
-                            }
-
-                            ToSend.Add(new Tuple<EventType, XSNotification>(EventType.PlayerJoin, new XSNotification()
-                            {
-                                Timeout = Configuration.PlayerJoinedNotificationTimeoutSeconds,
-                                Icon = IgnorableIconPaths.Contains(Configuration.PlayerJoinedIconPath) ? Configuration.PlayerJoinedIconPath : Configuration.GetLocalResourcePath(Configuration.PlayerJoinedIconPath),
-                                AudioPath = IgnorableAudioPaths.Contains(Configuration.PlayerJoinedAudioPath) ? Configuration.PlayerJoinedAudioPath : Configuration.GetLocalResourcePath(Configuration.PlayerJoinedAudioPath),
-                                Title = message
-                            }));
-
-                            Log(LogEventType.Event, $"[VRC] Join: {message}");
-                        }
-                        // Get player leaves
-                        else if (line.Contains("[Behaviour] OnPlayerLeft "))
-                        {
-                            for (int i = 0; i < tokens.Length; i++)
-                            {
-                                if (tokens[i] == "OnPlayerLeft")
-                                {
-                                    tocLoc = i;
-                                    break;
-                                }
-                            }
-
-                            string message = "";
-                            string displayName = "";
-
-                            if (tokens.Length > tocLoc + 1)
-                            {
-                                string name = "";
-
-                                for (int i = tocLoc + 1; i < tokens.Length; i++)
-                                    name += tokens[i] + " ";
-
-                                displayName = name.Trim();
-
-                                message += displayName;
-                            }
-                            else
-                            {
-                                message += "No username was provided.";
-                            }
-
-                            ToSend.Add(new Tuple<EventType, XSNotification>(EventType.PlayerLeft, new XSNotification()
-                            {
-                                Timeout = Configuration.PlayerLeftNotificationTimeoutSeconds,
-                                Icon = IgnorableIconPaths.Contains(Configuration.PlayerLeftIconPath) ? Configuration.PlayerLeftIconPath : Configuration.GetLocalResourcePath(Configuration.PlayerLeftIconPath),
-                                AudioPath = IgnorableAudioPaths.Contains(Configuration.PlayerLeftAudioPath) ? Configuration.PlayerLeftAudioPath : Configuration.GetLocalResourcePath(Configuration.PlayerLeftAudioPath),
-                                Title = message
-                            }));
-
-                            Log(LogEventType.Event, $"[VRC] Leave: {message}");
-                        }
-                        // Shader keyword limit exceeded
-                        else if (line.Contains("Maximum number (256)"))
-                        {
-                            ToSend.Add(new Tuple<EventType, XSNotification>(EventType.KeywordsExceeded, new XSNotification()
-                            {
-                                Timeout = Configuration.MaximumKeywordsExceededTimeoutSeconds,
-                                Icon = IgnorableIconPaths.Contains(Configuration.MaximumKeywordsExceededIconPath) ? Configuration.MaximumKeywordsExceededIconPath : Configuration.GetLocalResourcePath(Configuration.MaximumKeywordsExceededIconPath),
-                                AudioPath = IgnorableAudioPaths.Contains(Configuration.MaximumKeywordsExceededAudioPath) ? Configuration.MaximumKeywordsExceededAudioPath : Configuration.GetLocalResourcePath(Configuration.MaximumKeywordsExceededAudioPath),
-                                Title = "Maximum shader keywords exceeded!"
-                            }));
-
-                            Log(LogEventType.Event, $"[VRC] Maximum shader keywords exceeded!");
+                            Log(LogEventType.Event, $"[CVR]World changed to {Variables.World.UUID}");
                         }
                         // Portal dropped
-                        else if (line.Contains("[Behaviour]") && line.Contains("Portals/PortalInternalDynamic"))
+                        else if (line.Contains("[Core:Scheduler]") && line.Contains("Added scheduler task: ClearCanPlacePortal"))
                         {
                             ToSend.Add(new Tuple<EventType, XSNotification>(EventType.PortalDropped, new XSNotification()
                             {
                                 Timeout = Configuration.PortalDroppedTimeoutSeconds,
                                 Icon = IgnorableIconPaths.Contains(Configuration.PortalDroppedIconPath) ? Configuration.PortalDroppedIconPath : Configuration.GetLocalResourcePath(Configuration.PortalDroppedIconPath),
                                 AudioPath = IgnorableAudioPaths.Contains(Configuration.PortalDroppedAudioPath) ? Configuration.PortalDroppedAudioPath : Configuration.GetLocalResourcePath(Configuration.PortalDroppedAudioPath),
-                                Title = "A portal has been spawned."
+                                Title = "You spawned a portal."
                             }));
 
-                            Log(LogEventType.Event, $"[VRC] Portal dropped.");
+                            Log(LogEventType.Event, $"[CVR]Portal dropped.");
                         }
                     }
                 }

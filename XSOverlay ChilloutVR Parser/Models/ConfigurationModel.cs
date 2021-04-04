@@ -16,7 +16,7 @@ namespace XSOverlay_VRChat_Parser.Models
         public long ParseFrequencyMilliseconds { get; set; }
         [Annotation("Polling frequency for new logs in OutputLogRoot")]
         public long DirectoryPollFrequencyMilliseconds { get; set; }
-        [Annotation("Absolute path to output log root for VRChat. Environment variables will be expanded.")]
+        [Annotation("Absolute path to output log root for ChilloutVR. Environment variables will be expanded.")]
         public string OutputLogRoot { get; set; }
         [Annotation("Determines whether or not logs of parsed events will be written to the session log in the user folder. Valid values: true, false")]
         public bool LogNotificationEvents { get; set; }
@@ -80,7 +80,7 @@ namespace XSOverlay_VRChat_Parser.Models
         {
             ParseFrequencyMilliseconds = 300;
             DirectoryPollFrequencyMilliseconds = 5000;
-            OutputLogRoot = @"%AppData%\..\LocalLow\VRChat\vrchat";
+            OutputLogRoot = @"%AppData%\..\LocalLow\Alpha Blend Interactive\ChilloutVR";
             LogNotificationEvents = true;
             NotificationVolume = 0.2f;
             Opacity = 0.75f;

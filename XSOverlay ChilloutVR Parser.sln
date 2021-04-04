@@ -3,7 +3,9 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 16
 VisualStudioVersion = 16.0.31105.61
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "XSOverlay VRChat Parser", "XSOverlay VRChat Parser\XSOverlay VRChat Parser.csproj", "{02DC8D37-5DAC-448B-BAFE-14C8FEFBD782}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "XSOverlay ChilloutVR Parser", "XSOverlay ChilloutVR Parser\XSOverlay ChilloutVR Parser.csproj", "{02DC8D37-5DAC-448B-BAFE-14C8FEFBD782}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "XSOverlay VRChat Parser", "..\XSOverlay-VRChat-Parser\XSOverlay VRChat Parser\XSOverlay VRChat Parser.csproj", "{77EDDAAC-2018-4317-858D-BC831F423791}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -15,6 +17,10 @@ Global
 		{02DC8D37-5DAC-448B-BAFE-14C8FEFBD782}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{02DC8D37-5DAC-448B-BAFE-14C8FEFBD782}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{02DC8D37-5DAC-448B-BAFE-14C8FEFBD782}.Release|Any CPU.Build.0 = Release|Any CPU
+		{77EDDAAC-2018-4317-858D-BC831F423791}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{77EDDAAC-2018-4317-858D-BC831F423791}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{77EDDAAC-2018-4317-858D-BC831F423791}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{77EDDAAC-2018-4317-858D-BC831F423791}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
