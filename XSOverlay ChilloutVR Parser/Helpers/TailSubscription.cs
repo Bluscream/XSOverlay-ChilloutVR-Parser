@@ -3,7 +3,7 @@ using System.IO;
 using System.Text;
 using System.Threading;
 
-namespace XSOverlay_VRChat_Parser.Helpers
+namespace XSOverlay_ChilloutVR_Parser.Helpers
 {
     public class TailSubscription : IDisposable
     {

@@ -10,10 +10,10 @@ using System.Threading.Tasks;
 using XSNotifications;
 using XSNotifications.Enum;
 using XSNotifications.Helpers;
-using XSOverlay_VRChat_Parser.Helpers;
-using XSOverlay_VRChat_Parser.Models;
+using XSOverlay_ChilloutVR_Parser.Helpers;
+using XSOverlay_ChilloutVR_Parser.Models;
 
-namespace XSOverlay_VRChat_Parser
+namespace XSOverlay_ChilloutVR_Parser
 {
     class Program
     {

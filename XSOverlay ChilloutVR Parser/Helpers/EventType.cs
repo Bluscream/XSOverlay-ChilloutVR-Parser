@@ -1,4 +1,4 @@
-﻿namespace XSOverlay_VRChat_Parser.Helpers
+﻿namespace XSOverlay_ChilloutVR_Parser.Helpers
 {
     public enum EventType
     {

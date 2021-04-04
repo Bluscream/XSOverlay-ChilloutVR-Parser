@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace XSOverlay_VRChat_Parser.Helpers
+namespace XSOverlay_ChilloutVR_Parser.Helpers
 {
     [AttributeUsage(AttributeTargets.Property)]
     public class Annotation : Attribute

@@ -3,7 +3,7 @@
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
     <TargetFramework>net5.0</TargetFramework>
-    <RootNamespace>XSOverlay_VRChat_Parser</RootNamespace>
+    <RootNamespace>XSOverlay_ChilloutVR_Parser</RootNamespace>
   </PropertyGroup>
 
   <ItemGroup>

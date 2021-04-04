@@ -6,9 +6,9 @@ using System.Text;
 using System.Text.Json;
 using XSNotifications.Enum;
 using XSNotifications.Helpers;
-using XSOverlay_VRChat_Parser.Helpers;
+using XSOverlay_ChilloutVR_Parser.Helpers;
 
-namespace XSOverlay_VRChat_Parser.Models
+namespace XSOverlay_ChilloutVR_Parser.Models
 {
     public class ConfigurationModel
     {
